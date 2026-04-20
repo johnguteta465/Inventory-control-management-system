@@ -1,3 +1,7 @@
+
+<img width="1876" height="1054" alt="image" src="https://github.com/user-attachments/assets/11c063ab-44ae-4a58-8060-f1970f849b21" />
+
+
 # Inventory Management System
 
 
