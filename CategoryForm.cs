@@ -17,7 +17,7 @@ namespace InventoryManagementSystem
         public CategoryForm()
         {
             InitializeComponent();
-            LoadCategories();
+            this.Load += (s, e) => LoadCategories();
         }
 
         private void InitializeComponent()
@@ -65,6 +65,7 @@ namespace InventoryManagementSystem
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 BackgroundColor = Color.White
             };
+            ThemeManager.ConfigureDataGridView(dgvCategories);
             dgvCategories.SelectionChanged += DgvCategories_SelectionChanged;
 
             this.Controls.AddRange(new Control[] { lblTitle, inputPanel, dgvCategories });
@@ -74,17 +75,18 @@ namespace InventoryManagementSystem
         {
             DataTable dt = DatabaseHelper.GetDataTable("SELECT CategoryID, CategoryName, Description FROM Categories ORDER BY CategoryName");
             dgvCategories.DataSource = dt;
-            dgvCategories.Columns["CategoryID"].Visible = false;
+            if (dgvCategories.Columns["CategoryID"] != null)
+                dgvCategories.Columns["CategoryID"].Visible = false;
         }
 
         private void DgvCategories_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvCategories.SelectedRows.Count > 0)
-            {
-                selectedId = Convert.ToInt32(dgvCategories.SelectedRows[0].Cells["CategoryID"].Value);
-                txtName.Text = dgvCategories.SelectedRows[0].Cells["CategoryName"].Value.ToString();
-                txtDescription.Text = dgvCategories.SelectedRows[0].Cells["Description"].Value.ToString();
-            }
+            if (dgvCategories.SelectedRows.Count == 0) return;
+            var row = dgvCategories.SelectedRows[0];
+            if (row.Cells["CategoryID"].Value == null) return;
+            selectedId           = Convert.ToInt32(row.Cells["CategoryID"].Value);
+            txtName.Text         = row.Cells["CategoryName"].Value?.ToString() ?? "";
+            txtDescription.Text  = row.Cells["Description"].Value?.ToString() ?? "";
         }
 
         private void BtnSave_Click(object sender, EventArgs e)

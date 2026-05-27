@@ -63,6 +63,7 @@ namespace InventoryManagementSystem
                 BackgroundColor = Color.White,
                 ReadOnly = true
             };
+            ThemeManager.ConfigureDataGridView(dgvCategorySummary);
             panel1.Controls.Add(dgvCategorySummary);
 
             // Panel 2 - Stock Status
@@ -92,6 +93,7 @@ namespace InventoryManagementSystem
                 BackgroundColor = Color.White,
                 ReadOnly = true
             };
+            ThemeManager.ConfigureDataGridView(dgvStockStatus);
             panel2.Controls.Add(dgvStockStatus);
 
             // Panel 3 - Sales Trend
@@ -121,6 +123,7 @@ namespace InventoryManagementSystem
                 BackgroundColor = Color.White,
                 ReadOnly = true
             };
+            ThemeManager.ConfigureDataGridView(dgvSalesTrend);
             panel3.Controls.Add(dgvSalesTrend);
 
             // Refresh Button
@@ -218,14 +221,15 @@ namespace InventoryManagementSystem
             try
             {
                 string query = @"SELECT 
-                    FORMAT(Date, 'yyyy-MM-dd') as SaleDate,
-                    COUNT(*) as TransactionCount,
-                    SUM(Quantity) as TotalItemsSold,
-                    SUM(Quantity * UnitPrice) as TotalSales
-                    FROM StockOut
-                    WHERE Date >= DATEADD(day, -30, GETDATE())
-                    GROUP BY Date
-                    ORDER BY Date DESC";
+                    FORMAT(s.SaleDate, 'yyyy-MM-dd') as SaleDate,
+                    COUNT(DISTINCT s.SaleID) as TransactionCount,
+                    SUM(si.Quantity) as TotalItemsSold,
+                    SUM(si.TotalPrice) as TotalSales
+                    FROM Sales s
+                    INNER JOIN SaleItems si ON s.SaleID = si.SaleID
+                    WHERE s.SaleDate >= DATEADD(day, -30, GETDATE())
+                    GROUP BY FORMAT(s.SaleDate, 'yyyy-MM-dd')
+                    ORDER BY SaleDate DESC";
 
                 DataTable dt = DatabaseHelper.GetDataTable(query);
                 dgvSalesTrend.DataSource = dt;

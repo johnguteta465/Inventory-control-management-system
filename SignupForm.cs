@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Drawing;
@@ -10,7 +10,6 @@ namespace InventoryManagementSystem
     public class SignupForm : Form
     {
         private TextBox txtUsername, txtFullName, txtPassword, txtConfirmPassword;
-        private ComboBox cmbRole;
         private Button btnSignup, btnLogin, btnClear;
         private Label lblStatus;
         private CheckBox chkShowPassword;
@@ -24,7 +23,7 @@ namespace InventoryManagementSystem
         private void InitializeComponent()
         {
             this.Text = "Create New Account";
-            this.Size = new Size(500, 650);
+            this.Size = new Size(500, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -67,7 +66,7 @@ namespace InventoryManagementSystem
             // Welcome Text
             Label lblWelcome = new Label()
             {
-                Text = "Create Account",
+                Text = "Create Customer Account",
                 Font = new Font("Segoe UI", 20, FontStyle.Bold),
                 ForeColor = Color.FromArgb(44, 62, 80),
                 Location = new Point(50, 120),
@@ -89,16 +88,16 @@ namespace InventoryManagementSystem
             int startX = 50;
             int fieldWidth = 400;
 
-            // Username
-            AddField("Username", startX, ref y, fieldWidth, out txtUsername);
+            // Username (with character counter)
+            AddFieldWithCounter("Username (max 8 chars)", startX, ref y, fieldWidth, out txtUsername);
             y += 50;
 
-            // Full Name
-            AddField("Full Name", startX, ref y, fieldWidth, out txtFullName);
+            // Full Name (with character counter)
+            AddFieldWithCounter("Full Name (max 8 chars)", startX, ref y, fieldWidth, out txtFullName);
             y += 50;
 
-            // Password
-            AddField("Password", startX, ref y, fieldWidth, out txtPassword);
+            // Password (with character counter)
+            AddFieldWithCounter("Password (max 8 chars)", startX, ref y, fieldWidth, out txtPassword);
             txtPassword.PasswordChar = '*';
             y += 50;
 
@@ -120,26 +119,6 @@ namespace InventoryManagementSystem
                 txtConfirmPassword.PasswordChar = chkShowPassword.Checked ? '\0' : '*';
             };
             y += 40;
-
-            // Role
-            Label lblRole = new Label()
-            {
-                Text = "Role",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.FromArgb(44, 62, 80),
-                Location = new Point(startX, y),
-                Size = new Size(100, 30)
-            };
-            cmbRole = new ComboBox()
-            {
-                Location = new Point(startX + 100, y),
-                Size = new Size(300, 30),
-                Font = new Font("Segoe UI", 10),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
-            cmbRole.Items.AddRange(new string[] { "Staff", "Admin" });
-            cmbRole.SelectedIndex = 0;
-            y += 50;
 
             // Status
             lblStatus = new Label()
@@ -216,8 +195,6 @@ namespace InventoryManagementSystem
             this.Controls.Add(headerPanel);
             this.Controls.Add(lblWelcome);
             this.Controls.Add(lblSubtitle);
-            this.Controls.Add(lblRole);
-            this.Controls.Add(cmbRole);
             this.Controls.Add(lblStatus);
             this.Controls.Add(btnSignup);
             this.Controls.Add(btnClear);
@@ -250,6 +227,47 @@ namespace InventoryManagementSystem
             this.Controls.Add(textBox);
         }
 
+        private void AddFieldWithCounter(string labelText, int x, ref int y, int width, out TextBox textBox)
+        {
+            Label lbl = new Label()
+            {
+                Text = labelText,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.FromArgb(44, 62, 80),
+                Location = new Point(x, y),
+                Size = new Size(130, 30)
+            };
+
+            textBox = new TextBox()
+            {
+                Location = new Point(x + 130, y),
+                Size = new Size(width - 170, 30),
+                Font = new Font("Segoe UI", 11),
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.FromArgb(248, 249, 250),
+                MaxLength = 8  // Limit to 8 characters
+            };
+
+            Label charCounter = new Label()
+            {
+                Text = "0/8",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.Gray,
+                Location = new Point(x + width - 35, y + 8),
+                Size = new Size(35, 20),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            textBox.TextChanged += (s, e) => {
+                charCounter.Text = textBox.Text.Length + "/8";
+                charCounter.ForeColor = textBox.Text.Length == 8 ? Color.Red : Color.Gray;
+            };
+
+            this.Controls.Add(lbl);
+            this.Controls.Add(textBox);
+            this.Controls.Add(charCounter);
+        }
+
         private void BtnSignup_Click(object sender, EventArgs e)
         {
             if (!ValidateInputs()) return;
@@ -262,9 +280,10 @@ namespace InventoryManagementSystem
                 return;
             }
 
-            if (CreateUser())
+            // Role is forced to "Customer"
+            if (CreateUser("Customer"))
             {
-                MessageBox.Show("✅ Account created successfully!\n\nUsername: " + txtUsername.Text.Trim(),
+                MessageBox.Show("✅ Customer account created successfully!\n\nUsername: " + txtUsername.Text.Trim(),
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 LoginForm login = new LoginForm();
@@ -275,14 +294,33 @@ namespace InventoryManagementSystem
 
         private bool ValidateInputs()
         {
-            if (string.IsNullOrWhiteSpace(txtUsername.Text)) { lblStatus.Text = "❌ Username required!"; txtUsername.Focus(); return false; }
-            if (string.IsNullOrWhiteSpace(txtFullName.Text)) { lblStatus.Text = "❌ Full Name required!"; txtFullName.Focus(); return false; }
-            if (string.IsNullOrWhiteSpace(txtPassword.Text)) { lblStatus.Text = "❌ Password required!"; txtPassword.Focus(); return false; }
-            if (txtUsername.Text.Length < 3) { lblStatus.Text = "❌ Username min 3 characters!"; txtUsername.Focus(); return false; }
-            if (txtPassword.Text.Length < 6) { lblStatus.Text = "❌ Password min 6 characters!"; txtPassword.Focus(); return false; }
-            if (!Regex.IsMatch(txtPassword.Text, "[0-9]")) { lblStatus.Text = "❌ Password needs a number!"; txtPassword.Focus(); return false; }
-            if (!Regex.IsMatch(txtPassword.Text, "[a-zA-Z]")) { lblStatus.Text = "❌ Password needs a letter!"; txtPassword.Focus(); return false; }
-            if (txtPassword.Text != txtConfirmPassword.Text) { lblStatus.Text = "❌ Passwords don't match!"; txtConfirmPassword.Focus(); return false; }
+            // Username validation
+            if (string.IsNullOrWhiteSpace(txtUsername.Text))
+            { lblStatus.Text = "❌ Username required!"; txtUsername.Focus(); return false; }
+            if (txtUsername.Text.Length > 8)
+            { lblStatus.Text = "❌ Username cannot exceed 8 characters!"; txtUsername.Focus(); return false; }
+            if (txtUsername.Text.Length < 3)
+            { lblStatus.Text = "❌ Username min 3 characters!"; txtUsername.Focus(); return false; }
+
+            // Full Name validation
+            if (string.IsNullOrWhiteSpace(txtFullName.Text))
+            { lblStatus.Text = "❌ Full Name required!"; txtFullName.Focus(); return false; }
+            if (txtFullName.Text.Length > 8)
+            { lblStatus.Text = "❌ Full Name cannot exceed 8 characters!"; txtFullName.Focus(); return false; }
+
+            // Password validation
+            if (string.IsNullOrWhiteSpace(txtPassword.Text))
+            { lblStatus.Text = "❌ Password required!"; txtPassword.Focus(); return false; }
+            if (txtPassword.Text.Length > 8)
+            { lblStatus.Text = "❌ Password cannot exceed 8 characters!"; txtPassword.Focus(); return false; }
+            if (txtPassword.Text.Length < 6)
+            { lblStatus.Text = "❌ Password min 6 characters!"; txtPassword.Focus(); return false; }
+            if (!Regex.IsMatch(txtPassword.Text, "[0-9]"))
+            { lblStatus.Text = "❌ Password needs a number!"; txtPassword.Focus(); return false; }
+            if (!Regex.IsMatch(txtPassword.Text, "[a-zA-Z]"))
+            { lblStatus.Text = "❌ Password needs a letter!"; txtPassword.Focus(); return false; }
+            if (txtPassword.Text != txtConfirmPassword.Text)
+            { lblStatus.Text = "❌ Passwords don't match!"; txtConfirmPassword.Focus(); return false; }
 
             lblStatus.Text = "";
             return true;
@@ -292,18 +330,16 @@ namespace InventoryManagementSystem
         {
             string query = "SELECT COUNT(*) FROM Users WHERE Username = @username";
             using (SqlConnection conn = DatabaseHelper.GetConnection())
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@username", username);
-                    conn.Open();
-                    int count = Convert.ToInt32(cmd.ExecuteScalar());
-                    return count > 0;
-                }
+                cmd.Parameters.AddWithValue("@username", username);
+                conn.Open();
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
             }
         }
 
-        private bool CreateUser()
+        private bool CreateUser(string role)
         {
             try
             {
@@ -311,16 +347,14 @@ namespace InventoryManagementSystem
                                  VALUES (@username, @password, @fullname, @role, GETDATE())";
 
                 using (SqlConnection conn = DatabaseHelper.GetConnection())
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@username", txtUsername.Text.Trim());
-                        cmd.Parameters.AddWithValue("@password", txtPassword.Text);
-                        cmd.Parameters.AddWithValue("@fullname", txtFullName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@role", cmbRole.Text);
-                        conn.Open();
-                        return cmd.ExecuteNonQuery() > 0;
-                    }
+                    cmd.Parameters.AddWithValue("@username", txtUsername.Text.Trim());
+                    cmd.Parameters.AddWithValue("@password", txtPassword.Text);
+                    cmd.Parameters.AddWithValue("@fullname", txtFullName.Text.Trim());
+                    cmd.Parameters.AddWithValue("@role", role);
+                    conn.Open();
+                    return cmd.ExecuteNonQuery() > 0;
                 }
             }
             catch (Exception ex)
@@ -336,7 +370,6 @@ namespace InventoryManagementSystem
             txtFullName.Clear();
             txtPassword.Clear();
             txtConfirmPassword.Clear();
-            cmbRole.SelectedIndex = 0;
             chkShowPassword.Checked = false;
             lblStatus.Text = "";
             txtUsername.Focus();

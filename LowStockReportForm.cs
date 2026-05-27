@@ -43,6 +43,7 @@ namespace InventoryManagementSystem
                 BackgroundColor = Color.White,
                 ReadOnly = true
             };
+            ThemeManager.ConfigureDataGridView(dgvLowStock);
 
             lblSummary = new Label()
             {

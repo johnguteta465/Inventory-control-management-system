@@ -253,11 +253,11 @@ namespace InventoryManagementSystem
                 using (SqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    lblStatus.Text = "✓ Database Connected";
+                    lblStatus.Text = "";
                     lblStatus.ForeColor = Color.Green;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 lblStatus.Text = "✗ Database Connection Failed!";
                 lblStatus.ForeColor = Color.Red;
@@ -297,11 +297,18 @@ namespace InventoryManagementSystem
                                 lblStatus.Text = "✓ Login Successful! Redirecting...";
                                 lblStatus.ForeColor = Color.Green;
 
-                                // Small delay to show success message
                                 System.Threading.Thread.Sleep(500);
 
-                                MainForm main = new MainForm();
-                                main.Show();
+                                if (Global.UserRole == "Customer")
+                                {
+                                    CustomerDashboardForm customerForm = new CustomerDashboardForm();
+                                    customerForm.Show();
+                                }
+                                else
+                                {
+                                    MainForm main = new MainForm();
+                                    main.Show();
+                                }
                                 this.Hide();
                             }
                             else

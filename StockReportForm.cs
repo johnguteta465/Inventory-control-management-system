@@ -156,6 +156,7 @@ namespace InventoryManagementSystem
                 AlternatingRowsDefaultCellStyle = { BackColor = Color.FromArgb(248, 249, 250) },
                 GridColor = Color.FromArgb(220, 220, 220)
             };
+            ThemeManager.ConfigureDataGridView(dgvStock);
             dgvStock.CellFormatting += DgvStock_CellFormatting;
 
             // Summary Panel
